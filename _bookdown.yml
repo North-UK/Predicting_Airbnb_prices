@@ -1,0 +1,6 @@
+book_filename: "Airbnb_Price_Prediction"
+delete_merged_file: true
+output_dir: "_bookdown_files"
+language:
+  ui:
+    chapter_name: "Chapter "

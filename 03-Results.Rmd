@@ -1,0 +1,108 @@
+# Tuning and Results
+
+The model works by drawing random observations from the original dataset prior to the construction of each tree. A split is then performed over mtry directions which are chosen at random. In turn, Parameters such as ‘mtry’, ‘sample size’ and ‘node size’ can be tuned to improve performance if needed. Tunning is an important process in model building. As Breiman (@Breiman2001) points out, the model must aim for an optimal compromise between low correlation while maintaining reasonable predictive strength.
+
+```{r, echo=FALSE}
+data_overview <- tribble(
+  ~Hyperparameter, ~Definition, ~Values,
+  "mtry", "Number of drawn candidate variables in each split", "p/3 for regression (, where p is the number of variables in the dataset).",
+  "Sample Size", "Number of observations that are drawn for each tree", "N (n being the number of observations).",
+  "Node Size", "Minimum number of observations in a terminal node", "5 for regression .",
+)
+kable(data_overview, "html") %>% 
+  kable_styling(full_width=F)
+```
+
+The best parameters can be defined by grid search techniques. In turn, a tuning grid is defined as a first step towards obtaining a more fine-grained control over the parameters in the model:
+
+```{r eval=FALSE}
+params <- expand.grid(
+mtry= c(2:8),
+node_size = seq(3, 15, by = 2), samp_size = c(.65, 0.7, 0.8, 0.9, 1)
+)
+```
+
+After the tuning grid has been defined, a loop is set up as a means to pass each combination of parameters to the algorithm. The results of each iteration of the loop are saved into a vector. 
+
+```{r eval=FALSE}
+for(i in 1:nrow(params)){
+rf.i <- ranger(
+ formula= reg.mod, data= train_x,
+ num.trees= 5000,
+ mtry= params$mtry[i], min.node.size= params$node_size[i],
+ sample.fraction= params$samp_size[i],
+ seed=123 
+ )
+# add OOB error to rf.grid
+rf.grid <- c(rf.grid, sqrt(rf.i$prediction.error)) 
+# print to see progress
+if (i%%10 == 0) cat(i, "\t")
+}
+```
+
+The which.min function extracts the best performing combination of parameters, which in this case are mtry=6, Node Size=3, Samp Size=0.9, and are then applied to a final model: 
+
+```{r eval=FALSE}
+rfFit= ranger(
+formula = reg.mod, 
+data=train_x, 
+num.trees = 5000, 
+mtry = 6, 
+min.node.size=3, 
+sample.fraction =0.9, 
+seed=123,
+importance = "impurity"
+)
+```
+
+We are also able to plot the the variables which contributed most to the model: 
+
+```{r echo=FALSE, fig.cap="Relative importance of each variable"}
+var_imp
+```
+
+## Results
+
+The results reveal that with the selected parameters, the final model explains about 55% of the variation. There is no standard guideline in determining an acceptable predictive level for R2. A rule of thumb proposed is that an R2 with 0.75, 0.50 and 0.25 can be described as substantial, moderate, and weak, respectively. But this could also be influenced by the context of the research. 
+
+```{r echo=FALSE}
+RF_result<- tribble(
+  ~RMSE, ~Rsquared, ~MAE,
+  "0.49", "0.55", "0.36"
+)
+kable(RF_result)
+```
+
+To compare results, we build an OLS model:
+
+```{r}
+reg.mod =
+  as.formula(log_price ~ accommodates + beds + bathrooms +
+               cleaning_fee + property_type_House +
+               property_type_Other + room_type_Private_room +
+               room_type_Shared_room)
+m = lm(reg.mod, data = data_anal)
+summary(m)
+```
+
+And finally, we can compare how both models predicted the prices for the potential listings:
+
+```{r, echo=FALSE}
+data_overview <- tribble(
+  ~ID, ~Price, ~RF_Price,
+  "1", "$80", "$80",
+  "2", "$40", "$35",
+  "3", "$40", "$35",
+  "4", "$40", "$35",
+  "5", "$110", "$95",
+  "6", "$65", "$70",
+  "7", "$105", "$100",
+  "8", "$30", "$30",
+  "9", "$65", "$70",
+  "10", "$90", "$95",
+)
+kable(data_overview, "html") %>% 
+  kable_styling(full_width=F)
+```
+
+

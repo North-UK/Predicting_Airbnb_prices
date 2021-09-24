@@ -1,0 +1,18 @@
+--- 
+title: "Predicting Airbnb Prices with a Random Forest model"
+author: "Henrique Moura"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib]
+biblio-style: apalike
+link-citations: yes
+description: |
+  "Part of an assignment done for the module GEO5917 Big Data and Consumer Analytics for the Msc in Consumer Analytics and Marketing Strategy at the University of Leeds."
+
+
+---
+
+# Executive Summary 
+
+This study aimed at constructing a Random Forest model for AirBnb pricing prediction using a bymber of factors related to rental data. The work is divided into an introduction, where the problem and the study aims are described. Methods in section 2 describes the data and the RF model and any data pre-processing. In section 3 and 4, the tuning and results are addressed and a critical evaluation of the model carried out, respectively.

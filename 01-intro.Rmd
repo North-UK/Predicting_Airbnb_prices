@@ -1,0 +1,11 @@
+# Introduction {#intro} 
+
+Established in 2007, Airbnb is an American company that operates an online marketplace for private lodging, with over five million active listings in 220 countries and regions. Hosts rely solely on private listings, with little or no support provided by the platform when it comes to pricing. A high price could mean a loss in possible costumers, and a price that is set too low might translate into a loss of profits. In turn, this project attempts to address this issue by developing a predictive Random Forest (RF) model of Airbnb rental pricing based on a variety of factors including ‘reviews’ and ‘bedrooms’. 
+
+## Study Aims
+
+Working closely with a client, this project attempts to develop a Random Forest Model (RF) to predict appropriate pricing for their portfolio of potential listings. 
+
+### Random Forest
+
+Described first by Breiman [@Breiman2001], Random forest is an ensemble learning method, operating by the construction of a multitude of decision trees and being capable of handling both classification and regression type problems. The logic behind the model is that multiple uncorrelated decisions trees perform significantly better as a group than they do alone. Each tree comprises a data sample from the training set with replacement, called the bootstrap sample. Randomness is then injected through feature bagging, and a vote (i.e. the most frequent categorical variable) yields the predicted class. The most sought after advantaged of the algorithm is its default ability to overcome tree correlation trough the introduction of randomness in the tree building process and thus being less prone to over fitting. Another key feature of the Random Forest model, is its ability to select and focus on the most important features. Yet, due to its black box nature, gaining enough insight into the model to understand why it produced the results becomes a difficult if nopt impossible feat.  

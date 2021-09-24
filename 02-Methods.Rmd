@@ -1,0 +1,142 @@
+# Methods
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse,knitr,ggplot2,reshape,scales,grid,gridExtra,GGally,caret, kableExtra)
+load("data_anal.RData")
+load("cleaning_vis.rda")
+load("house_vis.rda")
+load("other_vis.rda")
+load("shared_vis.rda")
+load("private_vis.rda")
+load("log.df.rda")
+load("cont_vis.rda")
+load("var_imp.rda")
+load("listingsr.rda")
+cor.mat <- round(cor(data_anal[-1]),3)
+# pivot the correlation matrix to long format
+lengthened <- pivot_longer(as_tibble(cor.mat,rownames="row"), -row)
+```
+
+Data for this project can be accessed through the open platform [Inside Airbnb](http://insideairbnb.com). Although the listings data provides us with much to work with, some cleaning and transforming still needs to be carried out in order for the model to be built. 
+
+## Data pre-processing
+
+The training data contains 4886 observations with a total of 9 features, log_price being the dependent, or target variable, and the others the independent, or predictors. The data are messy, needing to be cleaned and transformed, with new variables needing to be created. The following data preprocessing actions are thus taken:
+
+```{r eval=FALSE}
+## Price:
+# Data that describes prices in $’s are converted to numbers. The distribution of the variable as seen below is skewed, so we log the rental prices. 
+
+listings$price = dollar_to_number(listings$price)
+
+```
+
+```{r echo=FALSE, fig.cap="The raw Airbnb prices."}
+
+hist(listings$price, col = "salmon", breaks = 150)
+```
+
+```{r echo=FALSE, fig.cap="The log of the Airbnb price data."}
+
+hist(log(listings$price), col = "cornflowerblue")
+
+```
+
+```{r eval=FALSE}
+# Listings with price value of zero are removed:
+listings=listings[listings$price>0,]
+```
+
+```{r eval=FALSE}
+## Categorical variables, such as those that describe the type of property and the type of room, are reduced to fewer categories, and in this case binary variables are used (i.e., 1 or 0). The same is done for the ‘cleaning fee’ variable. 
+listings$property_type_House = (listings$property_type == "House")+0
+listings$property_type_Other = (listings$property_type == "Other")+0
+listings$room_type_Private_room = (listings$room_type == "Private room")+0
+listings$room_type_Shared_room = (listings$room_type == "Shared room")+0
+listings$cleaning_fee[is.na(listings$cleaning_fee)] = 0
+
+## we fill any empty gaps by applying the median value:
+listings$bathrooms[is.na(listings$bathrooms)]=median(listings$bathrooms, na.rm=T)
+listings$beds[is.na(listings$beds)]= median(listings$beds, na.rm=T)
+```
+
+As a result, the we are left with the following variables:
+
+```{r, echo=FALSE}
+data_overview <- tribble(
+  ~Variable, ~Type, ~Description,
+  "log_price", "numeric", "Night price for rental.",
+  "accomodates", "integer", "Number of people the room accommodates.",
+  "beds", "integer", "Number of bedrooms.",
+  "bathrooms", "numeric","No pre-processing was necessary for this variable. It is a measure of how many people the property accommodates.",
+  "cleaning_fee", "numeric", "Whether a cleaning fee exists or not.",
+  "property_type_House", "numeric", "Type of Property.",
+  "property_type_Other", "numeric","Type of Property - Other than house.",
+  "room_type_Private_room", "numeric","Type of Room.",
+  "room_type_Share_room", "numeric","Type of Room - Other.",
+)
+kable(data_overview, "html") %>% 
+  kable_styling(full_width=F)
+```
+
+The head of the preprocessed data can be seen below:
+
+```{r echo=FALSE}
+head(data_anal)
+```
+
+Before creating the model, the createDatapartition tool is used to split the data into two subsets, one for the model and one to evaluate the model’s performance. The function splits the data 70/30 respectively. 
+
+```{r eval=FALSE}
+# Splitting the data using the createDatapartition tool:
+training_index=createDataPartition(data_anal$log_price, p=0.7, list=F)
+train_x=data_anal[training_index,]
+test_x=data_anal[-training_index,]
+```
+
+Distribution of Categorical Variables
+
+```{r echo=FALSE, fig.cap="Distributions of categorical variables"}
+a1 <- ggplot(test.df, aes(cleaning_fee))+
+     geom_bar(fill = "chocolate3")+xlab(" ")+ylab("")+theme_minimal()
+
+a2 <- ggplot(test2.df, aes(property_type_House))+
+  geom_bar(fill = "chocolate3")+ylab(" ")+xlab(" ")+theme_minimal()
+
+a3 <- ggplot(test3.df, aes(room_type_Private_room))+
+  geom_bar(fill = "chocolate3")+ xlab(" ")+theme_minimal()
+
+a4 <- ggplot(test4.df, aes(room_type_Shared_room))+
+  geom_bar(fill = "chocolate3")+ xlab(" ")+ylab("")+theme_minimal()
+
+a5 <- ggplot(test5.df, aes(property_type_Other))+ 
+  geom_bar(fill = "chocolate3")+ ylab(" ") +xlab(" ")+theme_minimal()
+grid.arrange(a1,a2,a3,a4,a5,nrow=3)
+```
+
+Continuous Variables
+
+```{r echo=FALSE, fig.cap="Distributions of contious variables"}
+ggplot(Conthistogram, aes(x=value))+
+  geom_histogram(fill="chocolate3", bins = 20, col="white")+
+  facet_wrap(~ variable, ncol=, scales="free")+theme_minimal()
+```
+
+
+## Building the Model 
+
+The Random Forest model will be constructed using the data provided by Airbnb, with the price (log_price) as the the targeted variable and the remaining 8 as predictors. 
+
+```{r eval=FALSE}
+reg.mod=log_price~ accommodates + beds + bathrooms + cleaning_fee + property_type_House + property_type_Other + room_type_Private_room +
+room_type_Shared_room
+```
+
+A random forest is a simple predictor that consists of a collection of M randomised trees. M may be chosen arbitrarily and is usually only limited by available computing resources.  Since trees are trained independent of each other, with no issue of overfitting (@Breiman2001), from a modelling point of view it might make sense to let M tend to infinity. But as instructed, we set m at ntree =5000 using the randomForest package. 
+
+```{r eval=FALSE}
+rf1 <- randomForest( formula=reg.mod, 
+                     ntree=5000, 
+                     data=train_x
+)
+```
