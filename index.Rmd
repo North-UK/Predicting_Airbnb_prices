@@ -15,4 +15,4 @@ description: |
 
 # Executive Summary 
 
-This study aimed at constructing a Random Forest model for AirBnb pricing prediction using a bymber of factors related to rental data. The work is divided into an introduction, where the problem and the study aims are described. Methods in section 2 describes the data and the RF model and any data pre-processing. In section 3 and 4, the tuning and results are addressed and a critical evaluation of the model carried out, respectively.
+This study aimed at constructing a Random Forest model for AirBnb pricing prediction using a number of factors related to rental data. The work is divided into an introduction, where the problem and the study aims are described. Methods in section 2 describes the data and the RF model and any data pre-processing. In section 3 and 4, the tuning and results are addressed and a critical evaluation of the model carried out, respectively.
